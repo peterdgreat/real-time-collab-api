@@ -1,4 +1,6 @@
 class Api::V1::DocumentsController < ApplicationController
+  before_action :authenticate_user!
+
   def index
     documents = Document.all
     render json: documents
@@ -10,11 +12,11 @@ class Api::V1::DocumentsController < ApplicationController
   end
 
   def create
-    document = Document.new(document_params)
-    if document.save
-      render json: document, status: :created
+    @document = current_user.documents.new(document_params)
+    if @document.save
+      render json: @document, status: :created
     else
-      render json: document.errors, status: :unprocessable_entity
+      render json: { errors: @document.errors.full_messages }, status: :unprocessable_entity
     end
   end
 
