@@ -1,27 +1,18 @@
 class Api::V1::TasksController < ApplicationController
-  def create
-    task = Task.new(task_params)
-    if task.save
-      ActionCable.server.broadcast("document_#{task.document_id}", { type: 'new_task', task: task })
-      render json: task, status: :created
-    else
-      render json: task.errors, status: :unprocessable_entity
-    end
-  end
+  before_action :authenticate_user!
 
-  def update
-    task = Task.find(params[:id])
-    if task.update(task_params)
-      ActionCable.server.broadcast("document_#{task.document_id}", { type: 'update_task', task: task })
-      render json: task
+  def create
+    @task = current_user.tasks.new(task_params)
+    if @task.save
+      render json: @task, status: :created
     else
-      render json: task.errors, status: :unprocessable_entity
+      render json: { errors: @task.errors.full_messages }, status: :unprocessable_entity
     end
   end
 
   private
 
   def task_params
-    params.require(:task).permit(:user_id, :document_id, :title, :description, :status)
+    params.require(:task).permit(:document_id, :title, :description, :status)
   end
 end
