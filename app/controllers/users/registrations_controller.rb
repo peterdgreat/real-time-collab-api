@@ -1,19 +1,32 @@
 module Users
   class RegistrationsController < Devise::RegistrationsController
     respond_to :json
+    include ErrorHandling
 
-    private
+    def create
+      build_resource(sign_up_params)
 
-    def respond_with(resource, _opts = {})
-      if resource.persisted?
+      if resource.save
         render json: {
           status: { code: 200, message: 'Signed up successfully.' },
           data: UserSerializer.new(resource).serializable_hash[:data][:attributes]
-        }
+        }, status: :created
       else
-        render json: {
-          status: { message: "User couldn't be created successfully. #{resource.errors.full_messages.to_sentence}" }
-        }, status: :unprocessable_entity
+        handle_registration_errors(resource)
+      end
+    end
+
+    private
+
+    def sign_up_params
+      params.require(:user).permit(:email, :password, :password_confirmation)
+    end
+
+    def handle_registration_errors(resource)
+      if resource.errors.details[:email].any? { |error| error[:error] == :taken }
+        render json: { error: 'Email has already been taken.' }, status: :conflict
+      else
+        render_error(resource)
       end
     end
   end

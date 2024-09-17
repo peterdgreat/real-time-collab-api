@@ -1,12 +1,13 @@
 class Api::V1::CommentsController < ApplicationController
   before_action :authenticate_user!
+  include ErrorHandling
 
   def create
     @comment = current_user.comments.new(comment_params)
     if @comment.save
       render json: @comment, status: :created
     else
-      render json: { errors: @comment.errors.full_messages }, status: :unprocessable_entity
+      render_error(@comment)
     end
   end
 
