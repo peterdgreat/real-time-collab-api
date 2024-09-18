@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_09_10_153335) do
+ActiveRecord::Schema[7.1].define(version: 2024_09_18_133454) do
   create_table "comments", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "document_id", null: false
@@ -19,6 +19,15 @@ ActiveRecord::Schema[7.1].define(version: 2024_09_10_153335) do
     t.datetime "updated_at", null: false
     t.index ["document_id"], name: "index_comments_on_document_id"
     t.index ["user_id"], name: "index_comments_on_user_id"
+  end
+
+  create_table "document_users", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "document_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["document_id"], name: "index_document_users_on_document_id"
+    t.index ["user_id"], name: "index_document_users_on_user_id"
   end
 
   create_table "documents", force: :cascade do |t|
@@ -58,6 +67,8 @@ ActiveRecord::Schema[7.1].define(version: 2024_09_10_153335) do
 
   add_foreign_key "comments", "documents"
   add_foreign_key "comments", "users"
+  add_foreign_key "document_users", "documents"
+  add_foreign_key "document_users", "users"
   add_foreign_key "documents", "users"
   add_foreign_key "tasks", "documents"
   add_foreign_key "tasks", "users"

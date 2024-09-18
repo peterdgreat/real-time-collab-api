@@ -3,7 +3,22 @@ class Api::V1::DocumentsController < ApplicationController
   include ErrorHandling
 
   def index
-    documents = current_user.documents.all
+    Rails.logger.info("Current User ID: #{current_user.id}")
+
+    # Fetch documents owned by the current user
+    owned_documents = Document.where(user_id: current_user.id).includes(:users).map do |doc|
+      doc.as_json(include: { users: { only: [:id, :email] } }).merge(is_owned: true)
+    end
+
+    # Fetch documents shared with the current user
+    shared_documents = Document.joins(:document_users).where(document_users: { user_id: current_user.id }).includes(:users).map do |doc|
+      doc.as_json(include: { users: { only: [:id, :email] } }).merge(is_owned: false)
+    end
+
+    # Combine both sets of documents
+    documents = owned_documents + shared_documents
+    Rails.logger.info("Combined Documents: #{documents.inspect}")
+
     render json: documents
   end
 
@@ -17,7 +32,17 @@ class Api::V1::DocumentsController < ApplicationController
   end
 
   def create
-    @document = current_user.documents.new(document_params)
+    Rails.logger.info("Current User ID: #{current_user.id}") # Log the current user ID
+    if current_user.nil?
+      Rails.logger.error("Current user is nil")
+      render json: { error: "User must be logged in" }, status: :unauthorized
+      return
+    end
+
+    # Explicitly set the user when creating the document
+    @document = Document.new(document_params.merge(user: current_user))
+
+    Rails.logger.info("Document User ID: #{@document.user_id}") # Log the document user ID
     if @document.save
       ActionCable.server.broadcast("document_#{@document.id}", { message: "Document created", document: @document })
       render json: @document, status: :created
@@ -37,6 +62,18 @@ class Api::V1::DocumentsController < ApplicationController
       end
     else
       render_not_found("Document")
+    end
+  end
+
+  def share
+    document = Document.find(params[:id])
+    user = User.find_by(email: params[:email]) # Assuming you share by email
+
+    if user && document.users.exclude?(user)
+      document.users << user
+      render json: { message: "Document shared successfully." }, status: :ok
+    else
+      render json: { error: "User not found or already has access." }, status: :unprocessable_entity
     end
   end
 

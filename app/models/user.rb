@@ -11,7 +11,9 @@ class User < ApplicationRecord
 
   include Devise::JWT::RevocationStrategies::JTIMatcher
 
-  has_many :documents
   has_many :comments
   has_many :tasks
+
+  has_many :document_users
+  has_many :documents, through: :document_users
 end
