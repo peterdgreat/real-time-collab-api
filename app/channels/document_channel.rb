@@ -15,4 +15,6 @@ class DocumentChannel < ApplicationCable::Channel
     ActionCable.server.broadcast("document_#{params[:document_id]}", data)
     Rails.logger.info "Updated document_#{params[:document_id]} with data: #{data}"
   end
+
+
 end
