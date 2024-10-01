@@ -5,20 +5,30 @@ class Api::V1::DocumentsController < ApplicationController
   def index
     Rails.logger.info("Current User ID: #{current_user.id}")
 
-    # Fetch documents owned by the current user
-    owned_documents = Document.where(user_id: current_user.id).includes(:users).map do |doc|
-      doc.as_json(include: { users: { only: [:id, :email] } }).merge(is_owned: true)
+    # Fetch documents based on the type parameter
+    case params[:type]
+    when 'owned'
+      documents = Document.where(user_id: current_user.id).includes(:users).map do |doc|
+        doc.as_json(include: { users: { only: [:id, :email] } }).merge(is_owned: true)
+      end
+    when 'shared'
+      documents = Document.joins(:document_users).where(document_users: { user_id: current_user.id }).includes(:users).map do |doc|
+        doc.as_json(include: { users: { only: [:id, :email] } }).merge(is_owned: false)
+      end
+    else
+      # Fetch all documents (both owned and shared)
+      owned_documents = Document.where(user_id: current_user.id).includes(:users).map do |doc|
+        doc.as_json(include: { users: { only: [:id, :email] } }).merge(is_owned: true)
+      end
+
+      shared_documents = Document.joins(:document_users).where(document_users: { user_id: current_user.id }).includes(:users).map do |doc|
+        doc.as_json(include: { users: { only: [:id, :email] } }).merge(is_owned: false)
+      end
+
+      documents = owned_documents + shared_documents
     end
 
-    # Fetch documents shared with the current user
-    shared_documents = Document.joins(:document_users).where(document_users: { user_id: current_user.id }).includes(:users).map do |doc|
-      doc.as_json(include: { users: { only: [:id, :email] } }).merge(is_owned: false)
-    end
-
-    # Combine both sets of documents
-    documents = owned_documents + shared_documents
-    Rails.logger.info("Combined Documents: #{documents.inspect}")
-
+    Rails.logger.info("Documents: #{documents.inspect}")
     render json: documents
   end
 
@@ -51,6 +61,17 @@ class Api::V1::DocumentsController < ApplicationController
     end
   end
 
+
+
+  def get_draft
+    document = current_user.documents.find_by(id: params[:id], draft: true)
+    if document
+      render json: document
+    else
+      render json: { message: 'No draft available' }, status: :not_found
+    end
+  end
+
   def update
     document = Document.find_by(id: params[:id])
     if document
@@ -76,6 +97,18 @@ class Api::V1::DocumentsController < ApplicationController
       render json: { error: "User not found or already has access." }, status: :unprocessable_entity
     end
   end
+
+  def contributors
+    document = Document.find_by(id: params[:id])
+
+    if document
+      contributors = document.users.pluck(:email)
+      render json: { contributors: contributors }, status: :ok
+    else
+      render_not_found("Document")
+    end
+  end
+
 
   private
 

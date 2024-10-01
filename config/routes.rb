@@ -16,6 +16,9 @@ Rails.application.routes.draw do
       resources :documents do
         member do
           post :share
+          get :contributors
+          post :save_draft
+          get  :get_draft
         end
       end
       resources :comments, only: [:create]
