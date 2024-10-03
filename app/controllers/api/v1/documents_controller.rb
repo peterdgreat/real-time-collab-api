@@ -1,5 +1,5 @@
 class Api::V1::DocumentsController < ApplicationController
-  before_action :authenticate_user!
+  # before_action :authenticate_user!
   include ErrorHandling
 
   def index
