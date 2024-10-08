@@ -14,7 +14,7 @@ Devise.setup do |config|
   # confirmation, reset password and unlock tokens in the database.
   # Devise will use the `secret_key_base` as its `secret_key`
   # by default. You can change it below and use your own secret key.
-  # config.secret_key = 'f2ab6834a53191cd46ccc4aee98732e01293bb6014a98c524ffe9304508134598979130201207b63753b21c0c89920b1a03523c99d6dcd48d3557cbc5a404120'
+  # config.secret_key = '9432f6b23a8ed57bf5d9948f0b0e5b6d54acbd731f1001789c8aca1fce068372290c99968d99cb0346d895abfcd6770778415135b6ff740570cb473ff2a3dc10'
 
   # ==> Controller configuration
   # Configure the parent class to the devise controllers.
@@ -126,7 +126,7 @@ Devise.setup do |config|
   config.stretches = Rails.env.test? ? 1 : 12
 
   # Set up a pepper to generate the hashed password.
-  # config.pepper = '457533cbf7cf65fdde02d85cb5c4be9d19163b9d35ea354c390674fda0ea175badf12feda4e063360084fad8ca00b424cd4cdc61be19d1fd5a0012870a43c0a2'
+  # config.pepper = '8e73d5dd4f592504a0ce1c08ca49ef7db83c66296f8351447070d483adbc58b4d157d8637f17d98d3c8894e4828d28c0c83261481e7a1959dd83f5e42f93a2e6'
 
   # Send a notification to the original email when the user's email is changed.
   # config.send_email_changed_notification = false
@@ -263,7 +263,7 @@ Devise.setup do |config|
   # should add them to the navigational formats lists.
   #
   # The "*/*" below is required to match Internet Explorer requests.
-  config.navigational_formats = []
+  # config.navigational_formats = ['*/*', :html, :turbo_stream]
 
   # The default HTTP method used to sign out a resource. Default is :delete.
   config.sign_out_via = :delete
@@ -305,20 +305,20 @@ Devise.setup do |config|
   config.responder.error_status = :unprocessable_entity
   config.responder.redirect_status = :see_other
 
-  # ==> Configuration for :registerable
-
-  # When set to false, does not sign a user in automatically after their password is
-  # changed. Defaults to true, so a user is signed in automatically after changing a password.
-  # config.sign_in_after_change_password = true
-
+  # ==> Configuration for JWT
   config.jwt do |jwt|
-    jwt.secret = Rails.application.credentials.secret_key_base
+    jwt.secret = ENV['DEVISE_JWT_SECRET_KEY']
     jwt.dispatch_requests = [
       ['POST', %r{^/login$}]
     ]
     jwt.revocation_requests = [
       ['DELETE', %r{^/logout$}]
     ]
-    jwt.expiration_time = 1.day.to_i
+    # jwt.revocation_strategy = JwtDenylist
+    jwt.expiration_time = nil
   end
+  config.navigational_formats = []
+  # When set to false, does not sign a user in automatically after their password is
+  # changed. Defaults to true, so a user is signed in automatically after changing a password.
+  # config.sign_in_after_change_password = true
 end
