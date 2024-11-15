@@ -13,7 +13,14 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
-      resources :documents, only: [:index, :show, :create, :update]
+      resources :documents do
+        member do
+          post :share
+          get :contributors
+          post :save_draft
+          get  :get_draft
+        end
+      end
       resources :comments, only: [:create]
       resources :tasks, only: [:create, :update]
     end
